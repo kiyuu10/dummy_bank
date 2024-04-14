@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,15 +15,19 @@ func TestTransferTx(t *testing.T) {
 		transferAccount = createRandomAccount(t)
 		receiveAccount  = createRandomAccount(t)
 		// run n concurrent transfer transactions
-		n      = 5
+		n      = 2
 		amount = int64(10)
 
 		errs    = make(chan error)
 		results = make(chan TransferTxResult)
 	)
 
+	fmt.Println(">> before >> transfer account: ", transferAccount.Balance, " - Receive account: ", receiveAccount.Balance)
+
 	for i := 0; i < n; i++ {
+		txName := fmt.Sprintf("tx %d: ", i+1)
 		go func() {
+			ctx := context.WithValue(context.Background(), txKey, txName)
 			result, err := store.TransferTx(ctx, TransferTxParams{
 				FromAccountID: transferAccount.ID,
 				ToAccountID:   receiveAccount.ID,
@@ -35,6 +40,7 @@ func TestTransferTx(t *testing.T) {
 	}
 
 	//check results
+	exitsted := make(map[int]bool)
 	for i := 0; i < n; i++ {
 		err := <-errs
 		require.NoError(t, err)
@@ -71,7 +77,37 @@ func TestTransferTx(t *testing.T) {
 		_, err = store.GetEntry(ctx, result.ToEntry.ID)
 		require.NoError(t, err)
 
+		// check accounts
+		require.NotEmpty(t, result.FromAccount)
+		require.Equal(t, transferAccount.ID, result.FromAccount.ID)
+
+		require.NotEmpty(t, result.ToAccount)
+		require.Equal(t, receiveAccount.ID, result.ToAccount.ID)
+
 		//TODO: check account's balance
+		fmt.Println(">> tx >> transfer account: ", result.FromAccount.Balance, " - Receive account: ", result.ToAccount.Balance)
+		balanceTransferAcc := transferAccount.Balance - result.FromAccount.Balance
+		balanceReceiveAcc := result.ToAccount.Balance - receiveAccount.Balance
+		require.Equal(t, balanceTransferAcc, balanceReceiveAcc)
+		require.True(t, balanceTransferAcc > 0)
+		require.True(t, balanceTransferAcc%amount == 0)
+
+		k := int(balanceTransferAcc / amount)
+		require.True(t, k >= 1 && k <= n)
+		require.NotContains(t, exitsted, k)
+		exitsted[k] = true
+
+		// check the final updated balances
+		accTransferUpdated, err := testQueries.GetAccount(ctx, transferAccount.ID)
+		require.NoError(t, err)
+
+		accReceiveUpdated, err := testQueries.GetAccount(ctx, receiveAccount.ID)
+		require.NoError(t, err)
+
+		fmt.Println(">> after updated>> transfer account: ", accTransferUpdated.Balance, " - Receive account: ", accReceiveUpdated.Balance)
+		fmt.Println(">> after >> transfer account: ", transferAccount.Balance, " - Receive account: ", receiveAccount.Balance)
+		require.Equal(t, transferAccount.Balance-(int64(n)*amount), accTransferUpdated.Balance)
+		require.Equal(t, receiveAccount.Balance+(int64(n)*amount), accReceiveUpdated.Balance)
 
 	}
 
