@@ -25,9 +25,7 @@ func TestTransferTx(t *testing.T) {
 	fmt.Println(">> before >> transfer account: ", transferAccount.Balance, " - Receive account: ", receiveAccount.Balance)
 
 	for i := 0; i < n; i++ {
-		txName := fmt.Sprintf("tx %d: ", i+1)
 		go func() {
-			ctx := context.WithValue(context.Background(), txKey, txName)
 			result, err := store.TransferTx(ctx, TransferTxParams{
 				FromAccountID: transferAccount.ID,
 				ToAccountID:   receiveAccount.ID,
