@@ -50,3 +50,11 @@ func (server *Server) createUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+func newUserResponse(user db.User) UserResponse {
+	return UserResponse{
+		Username: user.Username,
+		FullName: user.FullName,
+		Email:    user.Email,
+	}
+}
