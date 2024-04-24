@@ -5,16 +5,24 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
 	db "github.com/kiyuu10/simplebank/db/sqlc"
+	"github.com/kiyuu10/simplebank/token"
+	"github.com/kiyuu10/simplebank/util"
 )
 
 // Server serves HTTP requests for our banking service
 type Server struct {
-	store  db.Store
-	router *gin.Engine
+	store      db.Store
+	tokenMaker token.Maker
+	router     *gin.Engine
 }
 
 // NewServer creates a new HTTP server and setup routing
-func NewServer(store db.Store) *Server {
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	//tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+	//if err != nil {
+	//	return nil, fmt.Errorf("cannot create token maker:%w", err)
+	//}
+
 	server := &Server{store: store}
 	router := gin.Default()
 
