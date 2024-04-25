@@ -2,7 +2,6 @@ package api
 
 type (
 	createAccountRequest struct {
-		Owner    string `json:"owner" binding:"required"`
 		Currency string `json:"currency" binding:"required,currency"`
 	}
 
@@ -11,6 +10,7 @@ type (
 	}
 
 	listAccountRequest struct {
+		Owner  string     `json:"owner"`
 		Paging listPaging `json:"paging"`
 	}
 
