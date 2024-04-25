@@ -31,22 +31,27 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		store:      store,
 		tokenMaker: tokenMaker,
 	}
-	router := gin.Default()
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("currency", validCurrency)
 	}
 
+	server.SetupRouter()
+
+	return server, nil
+}
+
+func (server *Server) SetupRouter() {
+	router := gin.Default()
+
 	router.POST("/accounts", server.createAccount)
 	router.POST("/accounts/get", server.getAccount)
 	router.POST("/accounts/list", server.listAccount)
-
 	router.POST("/transfers/create", server.createTransfer)
-
-	router.POST("users/create", server.createUser)
+	router.POST("/users/create", server.CreateUser)
+	router.POST("/users/login", server.LoginUser)
 
 	server.router = router
-	return server, nil
 }
 
 // Start runs the HTTP server on a specific address.
