@@ -11,10 +11,10 @@ RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.17.0/
 # RUN Stage
 FROM alpine:3.19
 WORKDIR /app
-COPY --from=builder /app/main /app/main
+COPY --from=builder /app/main .
 COPY --from=builder /app/migrate ./migrate 
 COPY app.env .
-COPY start.sh ./start.sh
+COPY start.sh .
 COPY db/migration ./migration
 
 EXPOSE 8080
